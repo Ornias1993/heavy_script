@@ -111,54 +111,64 @@ do
             exec bash "$script_name" "${update_selection[@]}"
             exit
             ;;
+
         1 | -r)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-r" && echo -e "\"-r\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-r" && continue
             update_selection+=("-r")
             ;;
+
         2 | -i)
             read -rt 120 -p "What is the name of the application we should ignore?: " up_ignore || { echo -e "\nFailed to make a selection in time" ; exit; }
             ! [[ $up_ignore =~ ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$ ]] && echo -e "Error: \"$up_ignore\" is not a possible option for an application name" && sleep 3 && continue
             update_selection+=("-i" "$up_ignore")
             ;;
+
         3 | -S)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-S" && echo -e "\"-S\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-S" && continue
             update_selection+=("-S")
             ;;
+
         4 | -v)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-v" && echo -e "\"-v\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-v" && continue
             update_selection+=("-v")
             ;;
+
         5 | -t)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-t" && echo -e "\"-t\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-t" && continue
             echo "What do you want your timeout to be?"
             read -rt 120 -p "Please type an integer: " up_timeout || { echo -e "\nFailed to make a selection in time" ; exit; }
             ! [[ $up_timeout =~ ^[0-9]+$ ]] && echo -e "Error: \"$up_timeout\" is invalid, it needs to be an integer\nNOT adding it to the list" && sleep 3 && continue
             update_selection+=("-t" "$up_timeout")
             ;;
+
         6 | -b)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-b" && echo -e "\"-b\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-b" && continue
             echo "Up to how many backups should we keep?"
             read -rt 120 -p "Please type an integer: " up_backups || { echo -e "\nFailed to make a selection in time" ; exit; }
             ! [[ $up_backups =~ ^[0-9]+$ ]] && echo -e "Error: \"$up_backups\" is invalid, it needs to be an integer\nNOT adding it to the list" && sleep 3 && continue
             [[ $up_backups == 0 ]] && echo -e "Error: Number of backups cannot be 0\nNOT adding it to the list" && sleep 3 && continue
             update_selection+=("-b" "$up_backups")
             ;;
+
         7 | -s)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-s" && echo -e "\"-s\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-s" && continue
             update_selection+=("-s")
             ;;
+
         8 | -p)
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "-p" && echo -e "\"-p\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
+            check_in_use "-p" && continue
             update_selection+=("-p")
             ;;
+
         9 | --ignore-img )
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "--ignore-img" && echo -e "\"--ignore-img\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
-            update_selection+=("--ignore-img")      
+            check_in_use "--ignore-img" && continue
             ;;
+
         10 | --self-update )
-            printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "--self-update" && echo -e "\"--self-update\" is already on here, skipping" && sleep 3 && continue #If option is already on there, skip it
-            update_selection+=("--self-update")      
+            check_in_use "--self-update" && continue
+            update_selection+=("--self-update")
             ;;
+
         99)
             count=2
             echo "restarting"
@@ -171,6 +181,7 @@ do
             sleep 3
             continue
             ;;
+
         *)
             echo "\"$current_selection\" was not an option, try again" && sleep 3 && continue 
             ;;
@@ -178,3 +189,10 @@ do
 done
 }
 export -f script_create
+
+
+
+check_in_use() {
+    #If option is already on there, skip it
+    printf '%s\0' "${update_selection[@]}" | grep -Fxqz -- "$0" && echo -e "\"$0\" is already on here, skipping" && sleep 3 && return 0
+}
