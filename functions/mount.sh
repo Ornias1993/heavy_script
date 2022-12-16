@@ -1,9 +1,9 @@
 #!/bin/bash
 
-
+# Mounting PVCs Menu
 mount(){
 pool=$(cli -c 'app kubernetes config' | grep -E "pool\s\|" | awk -F '|' '{print $3}' | tr -d " \t\n\r")
-while $selection != 1 || $selection != 2
+while [[ $selection != 1 ]] && [[ $selection != 2 ]]
 do
     clear -x
     title
@@ -32,9 +32,9 @@ do
     esac
 done
 }
-export -f mount
 
 
+#Unmount all PVCs
 unmount_all(){
 mapfile -t unmount_array < <(basename -a /mnt/heavyscript/* | sed "s/*//")
 [[ -z ${unmount_array[*]} ]] && echo "Theres nothing to unmount" && sleep 3 && return
@@ -51,7 +51,7 @@ rmdir /mnt/heavyscript
 sleep 3
 }
 
-
+#Mount a single PVC
 mount_app(){
 call=$(k3s kubectl get pvc -A | sort -u | awk '{print $1 "\t" $2 "\t" $4}' | sed "s/^0/ /")
 mount_list=$(echo "$call" | sed 1d | nl -s ") ")
@@ -121,4 +121,3 @@ do
     done
 done
 }
-export -f mount_app
