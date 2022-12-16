@@ -14,6 +14,7 @@ all_ports=$(k3s kubectl get service -A)
 
 clear -x
 count=0
+# Looping through all pods
 for i in "${ix_name_array[@]}"
 do
     [[ count -le 0 ]] && echo -e "\n" && ((count++))

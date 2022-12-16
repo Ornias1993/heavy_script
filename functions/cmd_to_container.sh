@@ -3,6 +3,8 @@
 
 cmd_to_container(){
 app_name=$(k3s crictl pods -s ready --namespace ix | sed -E 's/[[:space:]]([0-9]*|About)[a-z0-9 ]{5,12}ago[[:space:]]//' | sed '1d' | awk '{print $4}' | cut -c4- | sort -u | nl -s ") " | column -t)
+
+#Select an application
 while true
 do
     clear -x
@@ -24,15 +26,21 @@ do
         break
     fi
 done
+
+
 rm cont_file 2> /dev/null
 app_name=$(echo -e "$app_name" | grep ^"$selection)" | awk '{print $2}')
 mapfile -t pod_id < <(k3s crictl pods -s ready --namespace ix | grep -v "[[:space:]]svclb-" | grep -E "[[:space:]]ix-${app_name}[[:space:]]" | awk '{print $1}')
 search=$(k3s crictl ps -a -s running | sed -E 's/[[:space:]]([0-9]*|About)[a-z0-9 ]{5,12}ago[[:space:]]//')
+
+#Check if there are multiple containers
 for pod in "${pod_id[@]}"
 do
     echo "$search" | grep "$pod" >> cont_file
 done
 mapfile -t containers < <(sort -u cont_file 2> /dev/null)
+
+#Select a container
 case "${#containers[@]}" in
     0)
         echo -e "No containers available\nAre you sure the application in running?"
@@ -74,6 +82,8 @@ case "${#containers[@]}" in
         container_id=$(grep -E "[[:space:]]${container}[[:space:]]" cont_file | awk '{print $1}')
         ;;
 esac
+
+#Select an action
 while true
 do
     clear -x

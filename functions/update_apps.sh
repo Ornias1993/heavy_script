@@ -14,6 +14,7 @@ pool=$(cli -c 'app kubernetes config' | grep -E "dataset\s\|" | awk -F '|' '{pri
 index=0
 for app in "${array[@]}"
 do
+    #Grab data
     app_name=$(echo "$app" | awk -F ',' '{print $1}') #print out first catagory, name.
     old_app_ver=$(echo "$app" | awk -F ',' '{print $4}' | awk -F '_' '{print $1}' | awk -F '.' '{print $1}') #previous/current Application MAJOR Version
     new_app_ver=$(echo "$app" | awk -F ',' '{print $5}' | awk -F '_' '{print $1}' | awk -F '.' '{print $1}') #new Application MAJOR Version
@@ -56,6 +57,7 @@ index=0
 while_count=0
 rm deploying 2>/dev/null
 rm finished 2>/dev/null
+#Start update process
 while [[ ${#processes[@]} != 0 || $(wc -l finished 2>/dev/null | awk '{ print $1 }') -lt "${#array[@]}" ]]
 do
     if while_status=$(cli -m csv -c 'app chart_release query name,update_available,human_version,human_latest_version,container_images_update_available,status' 2>/dev/null) ; then
@@ -75,11 +77,15 @@ do
         continue
     fi
     count=0
+
+    #Check if any processes have finished
     for proc in "${processes[@]}"
     do
         kill -0 "$proc" &> /dev/null || unset "processes[$count]"
         ((count++)) 
     done
+
+    #Start new processes
     processes=("${processes[@]}")
     if [[ $index -lt ${#array[@]} && "${#processes[@]}" -lt "$update_limit" ]]; then
         pre_process "${array[$index]}" &
@@ -181,11 +187,13 @@ if [[ $rollback == "true" || "$startstatus"  ==  "STOPPED" ]]; then
         
         # If app reports ACTIVE right away, assume its a false positive and wait for it to change, or trust it after 5 updates to all_app_status
         status=$(grep "^$app_name," all_app_status | awk -F ',' '{print $2}')
+
         if [[ $count -lt 1 && $status == "ACTIVE" && "$(grep "^$app_name," deploying 2>/dev/null | awk -F ',' '{print $2}')" != "DEPLOYING" ]]; then  # If status shows up as Active or Stopped on the first check, verify that. Otherwise it may be a false report..
             [[ "$verbose" == "true" ]] && echo_array+=("Verifying $status..")
             before_loop=$(head -n 1 all_app_status)
             current_loop=0
-            until [[ "$status" != "ACTIVE" || $current_loop -gt 4 ]] # Wait for a specific change to app status, or 3 refreshes of the file to go by.
+            # Wait for a specific change to app status, or 5 refreshes of the file to go by.
+            until [[ "$status" != "ACTIVE" || $current_loop -gt 4 ]]
             do
                 status=$(grep "^$app_name," all_app_status | awk -F ',' '{print $2}')
                 sleep 1
